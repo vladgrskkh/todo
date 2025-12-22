@@ -61,6 +61,7 @@ func (s *TodoService) UpdateTask(task *domain.Task) error {
 }
 
 func (s *TodoService) DeleteTask(id int64) error {
+	// TODO: this should be in controller
 	if id < 1 {
 		return ErrInvalidID
 	}

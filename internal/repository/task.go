@@ -74,6 +74,7 @@ func (r *TaskRepo) Update(task *domain.Task) error {
 
 func (r *TaskRepo) Delete(id int64) error {
 	r.mutex.RLock()
+	// mb just delete and then compare len before and after?
 	_, ok := r.data[id]
 	if !ok {
 		r.mutex.RUnlock()

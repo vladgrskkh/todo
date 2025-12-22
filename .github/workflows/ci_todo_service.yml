@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feat/*
+      - dev/*
       - development
       - main
 
@@ -29,7 +30,7 @@ jobs:
         uses: golangci/golangci-lint-action@v7
         with:
           version: v2.5.0
-          working-directory: backend
+          working-directory: ./
 
       - name: 🧪 Run tests
         run: |
