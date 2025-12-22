@@ -56,10 +56,20 @@ func (r *TaskRepo) Insert(task *domain.Task) {
 }
 
 // TODO: race condition?(mb implement vesioning)
-func (r *TaskRepo) Update(task *domain.Task) {
+func (r *TaskRepo) Update(task *domain.Task) error {
+	r.mutex.RLock()
+	_, ok := r.data[task.ID]
+	if !ok {
+		r.mutex.RUnlock()
+		return ErrTaskNotFound
+	}
+	r.mutex.RUnlock()
+
 	r.mutex.Lock()
 	r.data[task.ID] = task
 	r.mutex.Unlock()
+
+	return nil
 }
 
 func (r *TaskRepo) Delete(id int64) error {
