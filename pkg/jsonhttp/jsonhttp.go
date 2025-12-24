@@ -10,6 +10,7 @@ import (
 	"strings"
 )
 
+// Envelope is a alias for a map[string]any
 type Envelope map[string]any
 
 // writeJSON is a helper method for writing JSON responses
