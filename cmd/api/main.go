@@ -39,8 +39,6 @@ func main() {
 }
 
 // TODO: mb make so that when task is done it cannot be updated
-// TODO: env parser package
-// TODO: validate requests
 // TODO: repo persistance
 // TODO: unit, integration tests
 // TODO: load test

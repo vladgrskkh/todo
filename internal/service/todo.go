@@ -6,6 +6,7 @@ import (
 
 	"github.com/vladgrskkh/todo/internal/domain"
 	"github.com/vladgrskkh/todo/internal/repository"
+	"github.com/vladgrskkh/todo/pkg/validator"
 )
 
 var (
@@ -42,8 +43,13 @@ func (s *TodoService) GetAllTasks() []*domain.Task {
 }
 
 func (s *TodoService) CreateTask(task *domain.Task) error {
-	// TODO: add validation
+	validator := validator.New()
 
+	domain.ValidateTask(validator, task)
+
+	if !validator.Valid() {
+		return validator
+	}
 	s.taskRepo.Insert(task)
 
 	return nil
@@ -51,6 +57,13 @@ func (s *TodoService) CreateTask(task *domain.Task) error {
 
 func (s *TodoService) UpdateTask(task *domain.Task) error {
 	// TODO: add validation
+	validator := validator.New()
+
+	domain.ValidateTask(validator, task)
+
+	if !validator.Valid() {
+		return validator
+	}
 
 	err := s.taskRepo.Update(task)
 	if err != nil {
@@ -61,7 +74,7 @@ func (s *TodoService) UpdateTask(task *domain.Task) error {
 }
 
 func (s *TodoService) DeleteTask(id int64) error {
-	// TODO: this should be in controller
+	// TODO: this should be in handler layer
 	if id < 1 {
 		return ErrInvalidID
 	}

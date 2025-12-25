@@ -9,7 +9,9 @@ import (
 	"github.com/vladgrskkh/todo/internal/domain"
 	"github.com/vladgrskkh/todo/internal/paramutil"
 	"github.com/vladgrskkh/todo/internal/repository"
+	s "github.com/vladgrskkh/todo/internal/service"
 	"github.com/vladgrskkh/todo/pkg/jsonhttp"
+	"github.com/vladgrskkh/todo/pkg/validator"
 )
 
 type TaskGetter interface {
@@ -28,6 +30,8 @@ func NewGetTaskHandler(logger *slog.Logger, service TaskGetter) http.HandlerFunc
 		task, err := service.GetTask(id)
 		if err != nil {
 			switch {
+			case errors.Is(err, s.ErrInvalidID):
+				apierrors.BadRequestResponse(logger, w, r, err)
 			case errors.Is(err, repository.ErrTaskNotFound):
 				apierrors.NotFoundResponse(logger, w, r)
 			default:
@@ -62,6 +66,7 @@ type TaskCreater interface {
 func NewPostTaskHandler(logger *slog.Logger, service TaskCreater) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var input struct {
+			ID          int64  `json:"id"`
 			Title       string `json:"title"`
 			Description string `json:"description"`
 		}
@@ -72,14 +77,14 @@ func NewPostTaskHandler(logger *slog.Logger, service TaskCreater) http.HandlerFu
 			return
 		}
 
-		task := &domain.Task{
-			Title:       input.Title,
-			Description: input.Description,
-		}
+		task := domain.NewTask(input.ID, input.Title, input.Description, false)
 
 		err = service.CreateTask(task)
 		if err != nil {
+			var validationErr *validator.Validator
 			switch {
+			case errors.As(err, &validationErr):
+				apierrors.FailedValidationResponse(logger, w, r, validationErr.Errors)
 			default:
 				apierrors.ServerErrorResponse(logger, w, r, err)
 			}
@@ -146,7 +151,13 @@ func NewTaskUpdater(logger *slog.Logger, service TaskUpdater) http.HandlerFunc {
 
 		err = service.UpdateTask(task)
 		if err != nil {
+			var validationErr *validator.Validator
 			switch {
+			case errors.As(err, &validationErr):
+				apierrors.FailedValidationResponse(logger, w, r, validationErr.Errors)
+			// TODO: handle this
+			case errors.Is(err, repository.ErrTaskNotFound):
+				apierrors.NotFoundResponse(logger, w, r)
 			default:
 				apierrors.ServerErrorResponse(logger, w, r, err)
 			}
@@ -189,6 +200,11 @@ func NewDeleteTaskHandler(logger *slog.Logger, service TaskDeleter) http.Handler
 		err = service.DeleteTask(task.ID)
 		if err != nil {
 			switch {
+			case errors.Is(err, s.ErrInvalidID):
+				apierrors.BadRequestResponse(logger, w, r, err)
+			// TODO : handle this
+			case errors.Is(err, repository.ErrTaskNotFound):
+				apierrors.NotFoundResponse(logger, w, r)
 			default:
 				apierrors.ServerErrorResponse(logger, w, r, err)
 			}

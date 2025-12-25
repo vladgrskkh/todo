@@ -13,6 +13,13 @@ func New() *Validator {
 	}
 }
 
+func (v *Validator) Error() string {
+	if !v.Valid() {
+		return "validation error"
+	}
+	return ""
+}
+
 // Valid returns true if the validator has no errors, false otherwise.
 func (v *Validator) Valid() bool {
 	return len(v.Errors) == 0
