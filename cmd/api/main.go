@@ -58,5 +58,4 @@ func main() {
 // TODO: load test
 // TODO: metrics
 // TODO: helthcheck
-// TODO: panic recovery, logging middleware
 // TODO: repo context
