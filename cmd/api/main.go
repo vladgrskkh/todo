@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log/slog"
 	"os"
 	"runtime/debug"
@@ -10,12 +11,25 @@ import (
 	"github.com/vladgrskkh/todo/internal/repository"
 	"github.com/vladgrskkh/todo/internal/server"
 	"github.com/vladgrskkh/todo/internal/service"
+	"github.com/vladgrskkh/todo/pkg/envload"
 )
 
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	var envPath string
 
-	// parsing config
+	flag.StringVar(&envPath, "envpath", ".env", "set path to .env file")
+
+	flag.Parse()
+
+	logger.Info("loading environment variables")
+	err := envload.Load(envPath, true)
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
+
+	logger.Info("creating config")
 	cfg, err := config.New()
 	if err != nil {
 		logger.Error(err.Error())

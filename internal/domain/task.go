@@ -11,7 +11,7 @@ type Task struct {
 	ID          int64  `json:"id"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
-	Done        bool   `json:"done,omitempty"`
+	Done        bool   `json:"done"`
 }
 
 func NewTask(id int64, title string, description string, done bool) *Task {

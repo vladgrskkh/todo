@@ -11,11 +11,11 @@ import (
 func Routes(logger *slog.Logger, service *service.TodoService) http.Handler {
 	router := http.NewServeMux()
 
-	router.HandleFunc("GET /v1/tasks/{id}", handlers.NewGetTaskHandler(logger, service))
-	router.HandleFunc("GET /v1/tasks", handlers.NewGetAllTasksHandler(logger, service))
-	router.HandleFunc("POST /v1/tasks", handlers.NewPostTaskHandler(logger, service))
-	router.HandleFunc("PUT /v1/tasks/{id}", handlers.NewTaskUpdater(logger, service))
-	router.HandleFunc("DELETE /v1/tasks/{id}", handlers.NewDeleteTaskHandler(logger, service))
+	router.HandleFunc("GET /todos/{id}", handlers.NewGetTaskHandler(logger, service))
+	router.HandleFunc("GET /todos", handlers.NewGetAllTasksHandler(logger, service))
+	router.HandleFunc("POST /todos", handlers.NewPostTaskHandler(logger, service))
+	router.HandleFunc("PUT /todos/{id}", handlers.NewTaskUpdater(logger, service))
+	router.HandleFunc("DELETE /todos/{id}", handlers.NewDeleteTaskHandler(logger, service))
 
 	return router
 }

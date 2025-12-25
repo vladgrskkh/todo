@@ -28,7 +28,7 @@ func New(logger *slog.Logger, cfg *config.Config, routes http.Handler) *Server {
 		WriteTimeout: 30 * time.Second,
 	}
 	return &Server{
-		logger: nil,
+		logger: logger,
 		srv:    srv,
 	}
 }
