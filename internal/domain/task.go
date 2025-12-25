@@ -12,14 +12,16 @@ type Task struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	Done        bool   `json:"done"`
+	Version     int    `json:"-"`
 }
 
-func NewTask(id int64, title string, description string, done bool) *Task {
+func NewTask(id int64, title string, description string) *Task {
 	return &Task{
 		ID:          id,
 		Title:       title,
 		Description: description,
-		Done:        done,
+		Done:        false,
+		Version:     1,
 	}
 }
 

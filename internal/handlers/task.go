@@ -32,7 +32,7 @@ func NewGetTaskHandler(logger *slog.Logger, service TaskGetter) http.HandlerFunc
 			switch {
 			case errors.Is(err, s.ErrInvalidID):
 				apierrors.BadRequestResponse(logger, w, r, err)
-			case errors.Is(err, repository.ErrTaskNotFound):
+			case errors.Is(err, repository.ErrNotFound):
 				apierrors.NotFoundResponse(logger, w, r)
 			default:
 				apierrors.ServerErrorResponse(logger, w, r, err)
@@ -77,7 +77,7 @@ func NewPostTaskHandler(logger *slog.Logger, service TaskCreater) http.HandlerFu
 			return
 		}
 
-		task := domain.NewTask(input.ID, input.Title, input.Description, false)
+		task := domain.NewTask(input.ID, input.Title, input.Description)
 
 		err = service.CreateTask(task)
 		if err != nil {
@@ -113,10 +113,11 @@ func NewTaskUpdater(logger *slog.Logger, service TaskUpdater) http.HandlerFunc {
 		}
 
 		// mb this should be done in service layer
+		// TODO: duplicates in service layer(need to decide what to do)
 		task, err := service.GetTask(id)
 		if err != nil {
 			switch {
-			case errors.Is(err, repository.ErrTaskNotFound):
+			case errors.Is(err, repository.ErrNotFound):
 				apierrors.NotFoundResponse(logger, w, r)
 			default:
 				apierrors.ServerErrorResponse(logger, w, r, err)
@@ -156,7 +157,7 @@ func NewTaskUpdater(logger *slog.Logger, service TaskUpdater) http.HandlerFunc {
 			case errors.As(err, &validationErr):
 				apierrors.FailedValidationResponse(logger, w, r, validationErr.Errors)
 			// TODO: handle this
-			case errors.Is(err, repository.ErrTaskNotFound):
+			case errors.Is(err, repository.ErrNotFound):
 				apierrors.NotFoundResponse(logger, w, r)
 			default:
 				apierrors.ServerErrorResponse(logger, w, r, err)
@@ -173,7 +174,6 @@ func NewTaskUpdater(logger *slog.Logger, service TaskUpdater) http.HandlerFunc {
 }
 
 type TaskDeleter interface {
-	GetTask(id int64) (*domain.Task, error)
 	DeleteTask(id int64) error
 }
 
@@ -185,25 +185,12 @@ func NewDeleteTaskHandler(logger *slog.Logger, service TaskDeleter) http.Handler
 			return
 		}
 
-		task, err := service.GetTask(id)
-		if err != nil {
-			switch {
-			case errors.Is(err, repository.ErrTaskNotFound):
-				apierrors.NotFoundResponse(logger, w, r)
-			default:
-				apierrors.ServerErrorResponse(logger, w, r, err)
-			}
-
-			return
-		}
-
-		err = service.DeleteTask(task.ID)
+		err = service.DeleteTask(id)
 		if err != nil {
 			switch {
 			case errors.Is(err, s.ErrInvalidID):
 				apierrors.BadRequestResponse(logger, w, r, err)
-			// TODO : handle this
-			case errors.Is(err, repository.ErrTaskNotFound):
+			case errors.Is(err, repository.ErrNotFound):
 				apierrors.NotFoundResponse(logger, w, r)
 			default:
 				apierrors.ServerErrorResponse(logger, w, r, err)

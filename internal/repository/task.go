@@ -10,13 +10,13 @@ import (
 )
 
 var (
-	ErrTaskNotFound = errors.New("task not found")
+	ErrNotFound     = errors.New("resource not found")
+	ErrEditConflict = errors.New("edit conflict")
 )
 
 type TaskRepo struct {
-	data   map[int64]*domain.Task
-	nextID int64
-	mutex  sync.RWMutex
+	data  map[int64]*domain.Task
+	mutex sync.RWMutex
 }
 
 func NewTaskRepo() *TaskRepo {
@@ -31,7 +31,7 @@ func (r *TaskRepo) Get(id int64) (*domain.Task, error) {
 	task, ok := r.data[id]
 	if !ok {
 		r.mutex.RUnlock()
-		return nil, ErrTaskNotFound
+		return nil, ErrNotFound
 	}
 
 	r.mutex.RUnlock()
@@ -49,23 +49,24 @@ func (r *TaskRepo) GetAll() []*domain.Task {
 
 func (r *TaskRepo) Insert(task *domain.Task) {
 	r.mutex.Lock()
-	task.ID = r.nextID
 	r.data[task.ID] = task
-	r.nextID++
 	r.mutex.Unlock()
 }
 
-// TODO: race condition?(mb implement vesioning)
 func (r *TaskRepo) Update(task *domain.Task) error {
-	r.mutex.RLock()
-	_, ok := r.data[task.ID]
-	if !ok {
-		r.mutex.RUnlock()
-		return ErrTaskNotFound
-	}
-	r.mutex.RUnlock()
-
 	r.mutex.Lock()
+	// retriving task here to prevent data race(optimistic locking)
+	t, ok := r.data[task.ID]
+	if !ok {
+		return ErrNotFound
+	}
+
+	if t.Version != task.Version {
+		r.mutex.Unlock()
+		return ErrEditConflict
+	}
+
+	task.Version++
 	r.data[task.ID] = task
 	r.mutex.Unlock()
 
@@ -73,17 +74,14 @@ func (r *TaskRepo) Update(task *domain.Task) error {
 }
 
 func (r *TaskRepo) Delete(id int64) error {
-	r.mutex.RLock()
-	// mb just delete and then compare len before and after?
-	_, ok := r.data[id]
-	if !ok {
-		r.mutex.RUnlock()
-		return ErrTaskNotFound
-	}
-	r.mutex.RUnlock()
-
 	r.mutex.Lock()
+	before := len(r.data)
 	delete(r.data, id)
+
+	if len(r.data) == before {
+		r.mutex.Unlock()
+		return ErrNotFound
+	}
 	r.mutex.Unlock()
 
 	return nil

@@ -10,7 +10,8 @@ import (
 )
 
 var (
-	ErrInvalidID = fmt.Errorf("invalid id param")
+	ErrInvalidID  = fmt.Errorf("invalid id param")
+	ErrTaskExists = fmt.Errorf("task with this id already exists")
 )
 
 type TodoService struct {
@@ -50,13 +51,18 @@ func (s *TodoService) CreateTask(task *domain.Task) error {
 	if !validator.Valid() {
 		return validator
 	}
-	s.taskRepo.Insert(task)
 
+	// checking if task with this id already exists
+	_, err := s.taskRepo.Get(task.ID)
+	if err == nil {
+		return ErrTaskExists
+	}
+
+	s.taskRepo.Insert(task)
 	return nil
 }
 
 func (s *TodoService) UpdateTask(task *domain.Task) error {
-	// TODO: add validation
 	validator := validator.New()
 
 	domain.ValidateTask(validator, task)
@@ -65,7 +71,18 @@ func (s *TodoService) UpdateTask(task *domain.Task) error {
 		return validator
 	}
 
-	err := s.taskRepo.Update(task)
+	// checking if task with this id already exists
+	t, err := s.taskRepo.Get(task.ID)
+	if err != nil {
+		return err
+	}
+
+	if t.Done {
+		validator.AddError("done", "cannot change done task")
+		return validator
+	}
+
+	err = s.taskRepo.Update(task)
 	if err != nil {
 		return fmt.Errorf("error updating task with %d id: %w", task.ID, err)
 	}
@@ -74,7 +91,6 @@ func (s *TodoService) UpdateTask(task *domain.Task) error {
 }
 
 func (s *TodoService) DeleteTask(id int64) error {
-	// TODO: this should be in handler layer
 	if id < 1 {
 		return ErrInvalidID
 	}
