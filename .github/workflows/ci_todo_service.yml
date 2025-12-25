@@ -29,7 +29,6 @@ jobs:
         uses: golangci/golangci-lint-action@v7
         with:
           version: v2.5.0
-          working-directory: backend
 
       - name: 🧪 Run tests
         run: |
