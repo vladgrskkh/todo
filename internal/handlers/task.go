@@ -7,6 +7,7 @@ import (
 
 	"github.com/vladgrskkh/todo/internal/apierrors"
 	"github.com/vladgrskkh/todo/internal/domain"
+	"github.com/vladgrskkh/todo/internal/handlers/dto"
 	"github.com/vladgrskkh/todo/internal/paramutil"
 	"github.com/vladgrskkh/todo/internal/repository"
 	s "github.com/vladgrskkh/todo/internal/service"
@@ -65,11 +66,7 @@ type TaskCreater interface {
 
 func NewPostTaskHandler(logger *slog.Logger, service TaskCreater) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var input struct {
-			ID          int64  `json:"id"`
-			Title       string `json:"title"`
-			Description string `json:"description"`
-		}
+		var input dto.CreateTaskInput
 
 		err := jsonhttp.ReadJSON(w, r, &input)
 		if err != nil {
@@ -85,6 +82,8 @@ func NewPostTaskHandler(logger *slog.Logger, service TaskCreater) http.HandlerFu
 			switch {
 			case errors.As(err, &validationErr):
 				apierrors.FailedValidationResponse(logger, w, r, validationErr.Errors)
+			case errors.Is(err, s.ErrTaskExists):
+				apierrors.DuplicateTaskResponse(logger, w, r)
 			default:
 				apierrors.ServerErrorResponse(logger, w, r, err)
 			}
@@ -100,8 +99,7 @@ func NewPostTaskHandler(logger *slog.Logger, service TaskCreater) http.HandlerFu
 }
 
 type TaskUpdater interface {
-	GetTask(id int64) (*domain.Task, error)
-	UpdateTask(task *domain.Task) error
+	UpdateTask(id int64, input dto.UpdateTaskInput) (*domain.Task, error)
 }
 
 func NewTaskUpdater(logger *slog.Logger, service TaskUpdater) http.HandlerFunc {
@@ -112,25 +110,7 @@ func NewTaskUpdater(logger *slog.Logger, service TaskUpdater) http.HandlerFunc {
 			return
 		}
 
-		// mb this should be done in service layer
-		// TODO: duplicates in service layer(need to decide what to do)
-		task, err := service.GetTask(id)
-		if err != nil {
-			switch {
-			case errors.Is(err, repository.ErrNotFound):
-				apierrors.NotFoundResponse(logger, w, r)
-			default:
-				apierrors.ServerErrorResponse(logger, w, r, err)
-			}
-
-			return
-		}
-
-		var input struct {
-			Title       *string `json:"title"`
-			Description *string `json:"description"`
-			Done        *bool   `json:"done"`
-		}
+		var input dto.UpdateTaskInput
 
 		err = jsonhttp.ReadJSON(w, r, &input)
 		if err != nil {
@@ -138,27 +118,16 @@ func NewTaskUpdater(logger *slog.Logger, service TaskUpdater) http.HandlerFunc {
 			return
 		}
 
-		if input.Title != nil {
-			task.Title = *input.Title
-		}
-
-		if input.Description != nil {
-			task.Description = *input.Description
-		}
-
-		if input.Done != nil {
-			task.Done = *input.Done
-		}
-
-		err = service.UpdateTask(task)
+		task, err := service.UpdateTask(id, input)
 		if err != nil {
 			var validationErr *validator.Validator
 			switch {
 			case errors.As(err, &validationErr):
 				apierrors.FailedValidationResponse(logger, w, r, validationErr.Errors)
-			// TODO: handle this
 			case errors.Is(err, repository.ErrNotFound):
 				apierrors.NotFoundResponse(logger, w, r)
+			case errors.Is(err, repository.ErrEditConflict):
+				apierrors.EditConflictResponse(logger, w, r)
 			default:
 				apierrors.ServerErrorResponse(logger, w, r, err)
 			}

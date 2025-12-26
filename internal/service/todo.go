@@ -5,6 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/vladgrskkh/todo/internal/domain"
+	"github.com/vladgrskkh/todo/internal/handlers/dto"
 	"github.com/vladgrskkh/todo/internal/repository"
 	"github.com/vladgrskkh/todo/pkg/validator"
 )
@@ -62,32 +63,28 @@ func (s *TodoService) CreateTask(task *domain.Task) error {
 	return nil
 }
 
-func (s *TodoService) UpdateTask(task *domain.Task) error {
+func (s *TodoService) UpdateTask(id int64, input dto.UpdateTaskInput) (*domain.Task, error) {
+	// checking if task with this id already exists
+	task, err := s.taskRepo.Get(id)
+	if err != nil {
+		return nil, err
+	}
+
 	validator := validator.New()
 
+	task.Update(validator, input.Title, input.Description, input.Done)
 	domain.ValidateTask(validator, task)
 
 	if !validator.Valid() {
-		return validator
-	}
-
-	// checking if task with this id already exists
-	t, err := s.taskRepo.Get(task.ID)
-	if err != nil {
-		return err
-	}
-
-	if t.Done {
-		validator.AddError("done", "cannot change done task")
-		return validator
+		return nil, validator
 	}
 
 	err = s.taskRepo.Update(task)
 	if err != nil {
-		return fmt.Errorf("error updating task with %d id: %w", task.ID, err)
+		return nil, fmt.Errorf("error updating task with %d id: %w", task.ID, err)
 	}
 
-	return nil
+	return task, nil
 }
 
 func (s *TodoService) DeleteTask(id int64) error {

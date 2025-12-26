@@ -58,3 +58,4 @@ func main() {
 // TODO: metrics
 // TODO: helthcheck
 // TODO: repo context
+// TODO: endpoint todos/{id}/complete

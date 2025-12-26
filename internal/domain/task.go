@@ -25,6 +25,16 @@ func NewTask(id int64, title string, description string) *Task {
 	}
 }
 
+// Update modifies the task with the provided title, description and done status.
+// It checks that the task is not completed before modifying it.
+func (t *Task) Update(v *validator.Validator, title string, description string, done bool) {
+	v.Check(!t.Done, "done", "cannot modify a completed task")
+
+	t.Title = title
+	t.Description = description
+	t.Done = done
+}
+
 func ValidateTask(v *validator.Validator, task *Task) {
 	v.Check(task.ID > 0, "id", "must be a positive integer")
 

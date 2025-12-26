@@ -2,8 +2,6 @@ package repository
 
 import (
 	"errors"
-	"maps"
-	"slices"
 	"sync"
 
 	"github.com/vladgrskkh/todo/internal/domain"
@@ -15,13 +13,13 @@ var (
 )
 
 type TaskRepo struct {
-	data  map[int64]*domain.Task
+	data  map[int64]domain.Task
 	mutex sync.RWMutex
 }
 
 func NewTaskRepo() *TaskRepo {
 	return &TaskRepo{
-		data:  make(map[int64]*domain.Task, 0),
+		data:  make(map[int64]domain.Task, 0),
 		mutex: sync.RWMutex{},
 	}
 }
@@ -36,12 +34,16 @@ func (r *TaskRepo) Get(id int64) (*domain.Task, error) {
 
 	r.mutex.RUnlock()
 
-	return task, nil
+	return &task, nil
 }
 
 func (r *TaskRepo) GetAll() []*domain.Task {
 	r.mutex.RLock()
-	tasks := slices.Collect(maps.Values(r.data))
+
+	tasks := make([]*domain.Task, 0, len(r.data))
+	for _, t := range r.data {
+		tasks = append(tasks, &t)
+	}
 	r.mutex.RUnlock()
 
 	return tasks
@@ -49,7 +51,7 @@ func (r *TaskRepo) GetAll() []*domain.Task {
 
 func (r *TaskRepo) Insert(task *domain.Task) {
 	r.mutex.Lock()
-	r.data[task.ID] = task
+	r.data[task.ID] = *task
 	r.mutex.Unlock()
 }
 
@@ -58,6 +60,7 @@ func (r *TaskRepo) Update(task *domain.Task) error {
 	// retriving task here to prevent data race(optimistic locking)
 	t, ok := r.data[task.ID]
 	if !ok {
+		r.mutex.Unlock()
 		return ErrNotFound
 	}
 
@@ -67,7 +70,7 @@ func (r *TaskRepo) Update(task *domain.Task) error {
 	}
 
 	task.Version++
-	r.data[task.ID] = task
+	r.data[task.ID] = *task
 	r.mutex.Unlock()
 
 	return nil
