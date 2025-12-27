@@ -79,6 +79,8 @@ func (db *DB) GetObject(key string) ([]byte, error) {
 	return dataCopy, nil
 }
 
+// GetAllObjects retrieves all values stored in the database.
+// Order is not guaranteed.
 func (db *DB) GetAllObjects() [][]byte {
 	db.mutex.RLock()
 	defer db.mutex.RUnlock()

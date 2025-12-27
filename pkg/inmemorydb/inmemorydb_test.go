@@ -125,14 +125,20 @@ func TestGetAll(t *testing.T) {
 		t.Errorf("Unexpected number of tasks. Got: %d, Want: %d", len(tasks), 2)
 	}
 
-	for i, taskBytes := range tasks {
+	foundTasks := make(map[int64]*Task)
+	for _, taskBytes := range tasks {
 		retrieved, err := decodeTask(taskBytes)
 		if err != nil {
 			t.Errorf("decode error: %v", err)
 		}
+		foundTasks[retrieved.ID] = retrieved
+	}
 
-		if retrieved.ID != int64(i+1) || retrieved.Title != task.Title || retrieved.Description != task.Description {
-			t.Errorf("Retrieved task doesn't match original. Got: %+v, Want: %+v", retrieved, task)
+	for id := int64(1); id <= 2; id++ {
+		if _, exists := foundTasks[id]; !exists {
+			t.Errorf("Task with ID %d not found", id)
+		} else if foundTasks[id].Title != task.Title || foundTasks[id].Description != task.Description {
+			t.Errorf("Task %d doesn't match expected values. Got: %+v", id, foundTasks[id])
 		}
 	}
 }
