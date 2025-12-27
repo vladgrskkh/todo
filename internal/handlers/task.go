@@ -8,6 +8,7 @@ import (
 	"github.com/vladgrskkh/todo/internal/apierrors"
 	"github.com/vladgrskkh/todo/internal/domain"
 	"github.com/vladgrskkh/todo/internal/handlers/dto"
+	"github.com/vladgrskkh/todo/internal/handlers/middleware/metrics"
 	"github.com/vladgrskkh/todo/internal/paramutil"
 	"github.com/vladgrskkh/todo/internal/repository"
 	s "github.com/vladgrskkh/todo/internal/service"
@@ -94,6 +95,8 @@ func NewPostTaskHandler(logger *slog.Logger, service TaskCreater) http.HandlerFu
 
 			return
 		}
+
+		metrics.TotalTasksCreated.Add(1)
 
 		err = jsonhttp.WriteJSON(w, http.StatusCreated, jsonhttp.Envelope{"task": task}, nil)
 		if err != nil {

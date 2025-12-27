@@ -7,6 +7,7 @@ import (
 	"runtime/debug"
 
 	"github.com/vladgrskkh/todo/config"
+	"github.com/vladgrskkh/todo/internal/handlers/middleware/metrics"
 	"github.com/vladgrskkh/todo/internal/handlers/routes"
 	"github.com/vladgrskkh/todo/internal/repository"
 	"github.com/vladgrskkh/todo/internal/server"
@@ -59,6 +60,9 @@ func main() {
 	router := routes.Routes(logger, service)
 	s := server.New(logger, cfg, router)
 
+	logger.Info("initializing metrics")
+	metrics.InitMetrics()
+
 	logger.Info("starting server on port", slog.Int("port", cfg.Port))
 	err = s.Serve()
 	if err != nil {
@@ -67,7 +71,6 @@ func main() {
 	}
 }
 
-// TODO: repo persistance (use new package)
 // TODO: unit, integration tests
 // TODO: load test
 // TODO: metrics
