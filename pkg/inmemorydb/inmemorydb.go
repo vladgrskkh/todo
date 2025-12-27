@@ -33,12 +33,14 @@ type DB struct {
 // Open creates and returns a new database instance. It loads existing data from the file
 // at filePath, creating the file if it doesn't exist.
 // The returned DB should be closed with Close() when no longer needed.
+//
+// Dont open the same file twice. Opening the same file twice will result in ub.
 func Open(filePath string) (*DB, error) {
 	db := &DB{
 		data:     make(map[string][]byte),
 		FilePath: filePath,
 	}
-	err := db.Load()
+	err := db.load()
 	if err != nil {
 		return nil, fmt.Errorf("inmemorydb: failed to load database: %w", err)
 	}

@@ -6,8 +6,8 @@ import (
 	"os"
 )
 
-// Load reads the database file and reconstructs the in-memory state.
-func (db *DB) Load() error {
+// load reads the database file and reconstructs the in-memory state.
+func (db *DB) load() error {
 	// Check if file exists
 	if _, err := os.Stat(db.FilePath); os.IsNotExist(err) {
 		file, err := os.Create(db.FilePath)
@@ -53,6 +53,11 @@ func (db *DB) Load() error {
 // Close flushes pending writes to disk and closes the database file.
 // After Close is called, the database should not be used. The in-memory data is cleared.
 func (db *DB) Close() error {
+	db.mutex.Lock()
+	if db.closed {
+		db.mutex.Unlock()
+		return ErrClose
+	}
 	errFlush := db.writer.Flush()
 
 	// want to close file even if flush fails
@@ -61,7 +66,6 @@ func (db *DB) Close() error {
 		return fmt.Errorf("inmemorydb: unable to flush writer: %w", errFlush)
 	}
 
-	db.mutex.Lock()
 	db.file = nil
 	db.writer = nil
 	db.closed = true
