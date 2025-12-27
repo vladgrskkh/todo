@@ -52,7 +52,7 @@ func main() {
 	}
 }
 
-// TODO: repo persistance
+// TODO: repo persistance (use new package)
 // TODO: unit, integration tests
 // TODO: load test
 // TODO: metrics

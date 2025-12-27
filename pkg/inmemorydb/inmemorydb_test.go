@@ -46,7 +46,13 @@ func TestPutAndGet(t *testing.T) {
 	if err != nil {
 		t.Errorf("Open failed: %v", err)
 	}
-	defer db.Close()
+
+	defer func() {
+		e := db.Close()
+		if e != nil {
+			t.Errorf("Close failed: %v", e)
+		}
+	}()
 
 	task := &Task{ID: 1, Title: "Buy groceries", Description: "Get milk and bread"}
 	buf, err := encodeTask(task)
@@ -82,7 +88,13 @@ func TestPutAlreadyExists(t *testing.T) {
 	if err != nil {
 		t.Errorf("Open failed: %v", err)
 	}
-	defer db.Close()
+
+	defer func() {
+		e := db.Close()
+		if e != nil {
+			t.Errorf("Close failed: %v", e)
+		}
+	}()
 
 	task := &Task{ID: 1, Title: "Test Task", Description: "Test Description"}
 	taskData, err := encodeTask(task)
@@ -109,7 +121,13 @@ func TestGetNonExistent(t *testing.T) {
 	if err != nil {
 		t.Errorf("Open failed: %v", err)
 	}
-	defer db.Close()
+
+	defer func() {
+		e := db.Close()
+		if e != nil {
+			t.Errorf("Close failed: %v", e)
+		}
+	}()
 
 	_, err = db.GetObject("nonexistent")
 	if err != ErrNotFound {
@@ -125,7 +143,13 @@ func TestDeleteObject(t *testing.T) {
 	if err != nil {
 		t.Errorf("Open failed: %v", err)
 	}
-	defer db.Close()
+
+	defer func() {
+		e := db.Close()
+		if e != nil {
+			t.Errorf("Close failed: %v", e)
+		}
+	}()
 
 	task := &Task{ID: 1, Title: "Delete Test", Description: "Task to delete"}
 	taskData, err := encodeTask(task)
@@ -155,7 +179,13 @@ func TestDeleteNonExistent(t *testing.T) {
 	if err != nil {
 		t.Errorf("Open failed: %v", err)
 	}
-	defer db.Close()
+
+	defer func() {
+		e := db.Close()
+		if e != nil {
+			t.Errorf("Close failed: %v", e)
+		}
+	}()
 
 	err = db.DeleteObject("nonexistent")
 	if err != ErrNotFound {
@@ -171,7 +201,13 @@ func TestHas(t *testing.T) {
 	if err != nil {
 		t.Errorf("Open failed: %v", err)
 	}
-	defer db.Close()
+
+	defer func() {
+		e := db.Close()
+		if e != nil {
+			t.Errorf("Close failed: %v", e)
+		}
+	}()
 
 	task := &Task{ID: 1, Title: "Has Test", Description: "Test Has"}
 	taskData, err := encodeTask(task)
@@ -200,7 +236,13 @@ func TestClear(t *testing.T) {
 	if err != nil {
 		t.Errorf("Open failed: %v", err)
 	}
-	defer db.Close()
+
+	defer func() {
+		e := db.Close()
+		if e != nil {
+			t.Errorf("Close failed: %v", e)
+		}
+	}()
 
 	task1 := &Task{ID: 1, Title: "Clear Test 1", Description: "First"}
 	task2 := &Task{ID: 2, Title: "Clear Test 2", Description: "Second"}
@@ -237,7 +279,13 @@ func TestSize(t *testing.T) {
 	if err != nil {
 		t.Errorf("Open failed: %v", err)
 	}
-	defer db.Close()
+
+	defer func() {
+		e := db.Close()
+		if e != nil {
+			t.Errorf("Close failed: %v", e)
+		}
+	}()
 
 	task1 := &Task{ID: 1, Title: "Size Test 1", Description: "First"}
 	task2 := &Task{ID: 2, Title: "Size Test 2", Description: "Second"}
@@ -277,29 +325,40 @@ func TestSaveAndLoad(t *testing.T) {
 	task1 := &Task{ID: 1, Title: "Task 1", Description: "First task"}
 	task2 := &Task{ID: 2, Title: "Task 2", Description: "Second task"}
 
-	var buf1 bytes.Buffer
-	enc1 := gob.NewEncoder(&buf1)
-	enc1.Encode(task1)
+	buf1, err := encodeTask(task1)
+	if err != nil {
+		t.Errorf("encode error: %v", err)
+	}
 
-	var buf2 bytes.Buffer
-	enc2 := gob.NewEncoder(&buf2)
-	enc2.Encode(task2)
+	buf2, err := encodeTask(task2)
+	if err != nil {
+		t.Errorf("encode error: %v", err)
+	}
 
-	err = db1.PutObject("task:1", buf1.Bytes())
+	err = db1.PutObject("task:1", buf1)
 	if err != nil {
 		t.Errorf("PutObject failed: %v", err)
 	}
-	err = db1.PutObject("task:2", buf2.Bytes())
+	err = db1.PutObject("task:2", buf2)
 	if err != nil {
 		t.Errorf("PutObject failed: %v", err)
 	}
-	db1.Close()
+	err = db1.Close()
+	if err != nil {
+		t.Errorf("Close failed: %v", err)
+	}
 
 	db2, err := Open(dbPath)
 	if err != nil {
 		t.Errorf("Open failed: %v", err)
 	}
-	defer db2.Close()
+
+	defer func() {
+		e := db2.Close()
+		if e != nil {
+			t.Errorf("Close failed: %v", e)
+		}
+	}()
 
 	retrieved1, err := db2.GetObject("task:1")
 	if err != nil {
@@ -334,7 +393,13 @@ func TestLoadNonExistentFile(t *testing.T) {
 	if err != nil {
 		t.Errorf("Open failed: %v", err)
 	}
-	defer db.Close()
+
+	defer func() {
+		e := db.Close()
+		if e != nil {
+			t.Errorf("Close failed: %v", e)
+		}
+	}()
 
 	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
 		t.Error("Open should have created the file")
