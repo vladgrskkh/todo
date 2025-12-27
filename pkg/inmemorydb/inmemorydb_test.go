@@ -80,7 +80,7 @@ func TestPutAndGet(t *testing.T) {
 	}
 }
 
-func TestPutAlreadyExists(t *testing.T) {
+func TestGetAll(t *testing.T) {
 	tmpDir := t.TempDir()
 	dbPath := filepath.Join(tmpDir, "test.db")
 
@@ -96,20 +96,97 @@ func TestPutAlreadyExists(t *testing.T) {
 		}
 	}()
 
-	task := &Task{ID: 1, Title: "Test Task", Description: "Test Description"}
-	taskData, err := encodeTask(task)
+	task := &Task{ID: 1, Title: "Buy groceries", Description: "Get milk and bread"}
+	buf, err := encodeTask(task)
 	if err != nil {
 		t.Errorf("encode error: %v", err)
 	}
 
-	err = db.PutObject("key", taskData)
+	err = db.PutObject(strconv.Itoa(int(task.ID)), buf)
 	if err != nil {
-		t.Errorf("First PutObject failed: %v", err)
+		t.Errorf("PutObject failed: %v", err)
 	}
 
-	err = db.PutObject("key", taskData)
-	if err != ErrAlreadyExists {
-		t.Errorf("Expected ErrAlreadyExists, got: %v", err)
+	task.ID = 2
+
+	buf, err = encodeTask(task)
+	if err != nil {
+		t.Errorf("encode error: %v", err)
+	}
+
+	err = db.PutObject(strconv.Itoa(int(task.ID)), buf)
+	if err != nil {
+		t.Errorf("PutObject failed: %v", err)
+	}
+
+	tasks := db.GetAllObjects()
+
+	if len(tasks) != 2 {
+		t.Errorf("Unexpected number of tasks. Got: %d, Want: %d", len(tasks), 2)
+	}
+
+	for i, taskBytes := range tasks {
+		retrieved, err := decodeTask(taskBytes)
+		if err != nil {
+			t.Errorf("decode error: %v", err)
+		}
+
+		if retrieved.ID != int64(i+1) || retrieved.Title != task.Title || retrieved.Description != task.Description {
+			t.Errorf("Retrieved task doesn't match original. Got: %+v, Want: %+v", retrieved, task)
+		}
+	}
+}
+
+func TestPutOverride(t *testing.T) {
+	tmpDir := t.TempDir()
+	dbPath := filepath.Join(tmpDir, "test.db")
+
+	db, err := Open(dbPath)
+	if err != nil {
+		t.Errorf("Open failed: %v", err)
+	}
+
+	defer func() {
+		e := db.Close()
+		if e != nil {
+			t.Errorf("Close failed: %v", e)
+		}
+	}()
+
+	task := &Task{ID: 1, Title: "Buy groceries", Description: "Get milk and bread"}
+	buf, err := encodeTask(task)
+	if err != nil {
+		t.Errorf("encode error: %v", err)
+	}
+
+	err = db.PutObject(strconv.Itoa(int(task.ID)), buf)
+	if err != nil {
+		t.Errorf("PutObject failed: %v", err)
+	}
+
+	task.Title = "Buy groceries again"
+	buf, err = encodeTask(task)
+	if err != nil {
+		t.Errorf("encode error: %v", err)
+	}
+
+	err = db.PutObject(strconv.Itoa(int(task.ID)), buf)
+	if err != nil {
+		t.Errorf("PutObject failed: %v", err)
+	}
+
+	retrievedData, err := db.GetObject("1")
+	if err != nil {
+		t.Errorf("GetObject failed: %v", err)
+	}
+
+	retrieved, err := decodeTask(retrievedData)
+	if err != nil {
+		t.Errorf("decode error: %v", err)
+	}
+
+	if retrieved.ID != task.ID || retrieved.Title != task.Title || retrieved.Description != task.Description {
+		t.Errorf("Retrieved task doesn't match original. Got: %+v, Want: %+v", retrieved, task)
 	}
 }
 
@@ -307,7 +384,10 @@ func TestSize(t *testing.T) {
 	if err != nil {
 		t.Errorf("PutObject failed: %v", err)
 	}
-	_ = db.PutObject("key2", task2Data)
+	err = db.PutObject("key2", task2Data)
+	if err != nil {
+		t.Errorf("PutObject failed: %v", err)
+	}
 
 	if db.Size() != 2 {
 		t.Errorf("Expected size 2, got: %d", db.Size())

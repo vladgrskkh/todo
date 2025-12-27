@@ -1,2 +1,4 @@
 .env
 .DS_STORE
+todo.db
+todo.db.bak

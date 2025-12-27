@@ -1,91 +1,120 @@
 package repository
 
 import (
+	"bytes"
+	"encoding/gob"
 	"errors"
-	"sync"
+	"strconv"
 
 	"github.com/vladgrskkh/todo/internal/domain"
+	"github.com/vladgrskkh/todo/pkg/inmemorydb"
 )
 
 var (
-	ErrNotFound     = errors.New("resource not found")
-	ErrEditConflict = errors.New("edit conflict")
+	ErrNotFound      = errors.New("resource not found")
+	ErrEditConflict  = errors.New("edit conflict")
+	ErrAlreadyExists = errors.New("resource already exists")
 )
 
 type TaskRepo struct {
-	data  map[int64]domain.Task
-	mutex sync.RWMutex
+	db *inmemorydb.DB
 }
 
-func NewTaskRepo() *TaskRepo {
+func NewTaskRepo(db *inmemorydb.DB) *TaskRepo {
 	return &TaskRepo{
-		data:  make(map[int64]domain.Task, 0),
-		mutex: sync.RWMutex{},
+		db: db,
 	}
 }
 
 func (r *TaskRepo) Get(id int64) (*domain.Task, error) {
-	r.mutex.RLock()
-	task, ok := r.data[id]
-	if !ok {
-		r.mutex.RUnlock()
-		return nil, ErrNotFound
+	key := strconv.FormatInt(id, 10)
+	obj, err := r.db.GetObject(key)
+	if err != nil {
+		switch {
+		case errors.Is(err, inmemorydb.ErrNotFound):
+			return nil, ErrNotFound
+		default:
+			return nil, err
+		}
 	}
 
-	r.mutex.RUnlock()
+	dec := gob.NewDecoder(bytes.NewReader(obj))
+
+	var task domain.Task
+	err = dec.Decode(&task)
+	if err != nil {
+		return nil, err
+	}
 
 	return &task, nil
 }
 
-func (r *TaskRepo) GetAll() []*domain.Task {
-	r.mutex.RLock()
+func (r *TaskRepo) GetAll() ([]*domain.Task, error) {
+	tasks := make([]*domain.Task, 0, r.db.Size())
+	data := r.db.GetAllObjects()
 
-	tasks := make([]*domain.Task, 0, len(r.data))
-	for _, t := range r.data {
-		tasks = append(tasks, &t)
+	for _, v := range data {
+		dec := gob.NewDecoder(bytes.NewReader(v))
+
+		var task domain.Task
+		err := dec.Decode(&task)
+		if err != nil {
+			return nil, err
+		}
+
+		tasks = append(tasks, &task)
 	}
-	r.mutex.RUnlock()
 
-	return tasks
+	return tasks, nil
 }
 
-func (r *TaskRepo) Insert(task *domain.Task) {
-	r.mutex.Lock()
-	r.data[task.ID] = *task
-	r.mutex.Unlock()
+func (r *TaskRepo) Insert(task *domain.Task) error {
+	key := strconv.FormatInt(task.ID, 10)
+
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+	err := enc.Encode(task)
+	if err != nil {
+		return err
+	}
+
+	err = r.db.PutObject(key, buf.Bytes())
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (r *TaskRepo) Update(task *domain.Task) error {
-	r.mutex.Lock()
-	// retriving task here to prevent data race(optimistic locking)
-	t, ok := r.data[task.ID]
-	if !ok {
-		r.mutex.Unlock()
-		return ErrNotFound
+	key := strconv.FormatInt(task.ID, 10)
+
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+	err := enc.Encode(task)
+	if err != nil {
+		return err
 	}
 
-	if t.Version != task.Version {
-		r.mutex.Unlock()
-		return ErrEditConflict
+	err = r.db.PutObject(key, buf.Bytes())
+	if err != nil {
+		return err
 	}
-
-	task.Version++
-	r.data[task.ID] = *task
-	r.mutex.Unlock()
 
 	return nil
 }
 
 func (r *TaskRepo) Delete(id int64) error {
-	r.mutex.Lock()
-	before := len(r.data)
-	delete(r.data, id)
-
-	if len(r.data) == before {
-		r.mutex.Unlock()
-		return ErrNotFound
+	key := strconv.FormatInt(id, 10)
+	err := r.db.DeleteObject(key)
+	if err != nil {
+		switch {
+		case errors.Is(err, inmemorydb.ErrNotFound):
+			return ErrNotFound
+		default:
+			return err
+		}
 	}
-	r.mutex.Unlock()
 
 	return nil
 }

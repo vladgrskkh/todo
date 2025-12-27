@@ -54,8 +54,3 @@ func DuplicateTaskResponse(logger *slog.Logger, w http.ResponseWriter, r *http.R
 	message := "task with this id already exists"
 	errorResponse(logger, w, r, http.StatusConflict, message)
 }
-
-func EditConflictResponse(logger *slog.Logger, w http.ResponseWriter, r *http.Request) {
-	message := "unable to update the record due to an edit conflict, please try again"
-	errorResponse(logger, w, r, http.StatusConflict, message)
-}

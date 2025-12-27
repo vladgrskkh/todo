@@ -17,7 +17,7 @@ import (
 
 type TaskGetter interface {
 	GetTask(id int64) (*domain.Task, error)
-	GetAllTasks() []*domain.Task
+	GetAllTasks() ([]*domain.Task, error)
 }
 
 func NewGetTaskHandler(logger *slog.Logger, service TaskGetter) http.HandlerFunc {
@@ -51,9 +51,13 @@ func NewGetTaskHandler(logger *slog.Logger, service TaskGetter) http.HandlerFunc
 
 func NewGetAllTasksHandler(logger *slog.Logger, service TaskGetter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		tasks := service.GetAllTasks()
+		tasks, err := service.GetAllTasks()
+		if err != nil {
+			apierrors.ServerErrorResponse(logger, w, r, err)
+			return
+		}
 
-		err := jsonhttp.WriteJSON(w, http.StatusOK, jsonhttp.Envelope{"tasks": tasks}, nil)
+		err = jsonhttp.WriteJSON(w, http.StatusOK, jsonhttp.Envelope{"tasks": tasks}, nil)
 		if err != nil {
 			apierrors.ServerErrorResponse(logger, w, r, err)
 		}
@@ -126,8 +130,6 @@ func NewTaskUpdater(logger *slog.Logger, service TaskUpdater) http.HandlerFunc {
 				apierrors.FailedValidationResponse(logger, w, r, validationErr.Errors)
 			case errors.Is(err, repository.ErrNotFound):
 				apierrors.NotFoundResponse(logger, w, r)
-			case errors.Is(err, repository.ErrEditConflict):
-				apierrors.EditConflictResponse(logger, w, r)
 			default:
 				apierrors.ServerErrorResponse(logger, w, r, err)
 			}

@@ -7,7 +7,8 @@ import (
 )
 
 type Config struct {
-	Port int
+	Port   int
+	DBPath string
 }
 
 func New() (*Config, error) {
@@ -16,7 +17,13 @@ func New() (*Config, error) {
 		return nil, fmt.Errorf("error parsing port: %w", err)
 	}
 
+	dbPath := os.Getenv("API_TODO_DB_PATH")
+	if dbPath == "" {
+		dbPath = "todo.db"
+	}
+
 	return &Config{
-		Port: port,
+		Port:   port,
+		DBPath: dbPath,
 	}, nil
 }

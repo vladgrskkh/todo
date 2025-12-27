@@ -13,10 +13,9 @@ import (
 )
 
 var (
-	ErrNotFound      = errors.New("key not found")
-	ErrAlreadyExists = errors.New("key already exists")
-	ErrInvalidType   = errors.New("invalid type")
-	ErrClose         = errors.New("database is closed")
+	ErrNotFound    = errors.New("key not found")
+	ErrInvalidType = errors.New("invalid type")
+	ErrClose       = errors.New("database is closed")
 )
 
 // DB represents an in-memory key-value database with persistent storage.
@@ -34,7 +33,7 @@ type DB struct {
 // at filePath, creating the file if it doesn't exist.
 // The returned DB should be closed with Close() when no longer needed.
 //
-// Dont open the same file twice. Opening the same file twice will result in ub.
+// Dont open the same file twice. Opening the same file simoltaneously twice will result in ub.
 func Open(filePath string) (*DB, error) {
 	db := &DB{
 		data:     make(map[string][]byte),
@@ -48,18 +47,13 @@ func Open(filePath string) (*DB, error) {
 	return db, nil
 }
 
-// PutObject stores a value in the database at the given key. Returns ErrAlreadyExists
-// if the key already exists. The operation is persisted to disk.
+// PutObject stores a value in the database at the given key. Overrides existing key value.
+// The operation is persisted to disk.
 func (db *DB) PutObject(key string, value []byte) error {
 	db.mutex.Lock()
 	defer db.mutex.Unlock()
 	if db.closed {
 		return ErrClose
-	}
-
-	// Check if key already exists
-	if _, exists := db.data[key]; exists {
-		return ErrAlreadyExists
 	}
 
 	db.data[key] = value
@@ -77,10 +71,31 @@ func (db *DB) GetObject(key string) ([]byte, error) {
 
 	data, exists := db.data[key]
 	if !exists {
-		return data, ErrNotFound
+		return nil, ErrNotFound
 	}
 
-	return data, nil
+	dataCopy := make([]byte, len(data))
+	copy(dataCopy, data)
+	return dataCopy, nil
+}
+
+func (db *DB) GetAllObjects() [][]byte {
+	db.mutex.RLock()
+	defer db.mutex.RUnlock()
+	if db.closed {
+		return nil
+	}
+
+	dataCopy := make([][]byte, db.Size())
+
+	i := 0
+	for _, v := range db.data {
+		dataCopy[i] = make([]byte, len(v))
+		copy(dataCopy[i], v)
+		i++
+	}
+
+	return dataCopy
 }
 
 // DeleteObject removes the value associated with the given key from the database.

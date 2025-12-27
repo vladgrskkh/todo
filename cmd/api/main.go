@@ -12,6 +12,7 @@ import (
 	"github.com/vladgrskkh/todo/internal/server"
 	"github.com/vladgrskkh/todo/internal/service"
 	"github.com/vladgrskkh/todo/pkg/envload"
+	"github.com/vladgrskkh/todo/pkg/inmemorydb"
 )
 
 func main() {
@@ -36,8 +37,16 @@ func main() {
 		os.Exit(1)
 	}
 
+	db, err := inmemorydb.Open(cfg.DBPath)
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
+	defer db.Close()
+
+	logger.Info("database opened")
 	logger.Info("creating task repository and todo service")
-	taskRepo := repository.NewTaskRepo()
+	taskRepo := repository.NewTaskRepo(db)
 	service := service.NewTodoService(logger, taskRepo)
 
 	logger.Info("creating routes and server")

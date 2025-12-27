@@ -40,7 +40,7 @@ func (s *TodoService) GetTask(id int64) (*domain.Task, error) {
 	return task, nil
 }
 
-func (s *TodoService) GetAllTasks() []*domain.Task {
+func (s *TodoService) GetAllTasks() ([]*domain.Task, error) {
 	return s.taskRepo.GetAll()
 }
 
