@@ -2,3 +2,4 @@
 .DS_STORE
 todo.db
 todo.db.bak
+bin/

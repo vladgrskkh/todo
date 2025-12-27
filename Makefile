@@ -61,6 +61,7 @@ linker_flags := '-s'
 .PHONY: build/api
 build/api:
 	@echo 'Building cmd/api...'
+	sed -i '' 's/^API_TODO_VERSION=.*/API_TODO_VERSION=$(git_description)/' .env
 	go build -ldflags=${linker_flags} -o=./bin/api ./cmd/api
 	GOOS=linux GOARCH=amd64 go build -ldflags=${linker_flags} -o=./bin/linux_amd64/api ./cmd/api
 
@@ -68,6 +69,7 @@ build/api:
 .PHONY: build/docker/api
 build/docker/api:
 	@echo 'Building docker image...'
+	sed -i '' s/^API_TODO_VERSION=.*/API_TODO_VERSION=$(git_description)/' .env
 	docker build --build-arg LINKER_FLAGS=${linker_flags} --platform linux/amd64,linux/arm64 --tag vladgrskkh/todo .
 	@echo 'Pushing docker image...'
 	docker push vladgrskkh/todo:latest

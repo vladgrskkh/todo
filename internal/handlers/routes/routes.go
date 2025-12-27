@@ -11,12 +11,14 @@ import (
 	"github.com/vladgrskkh/todo/internal/service"
 )
 
-func Routes(logger *slog.Logger, service *service.TodoService) http.Handler {
+func Routes(logger *slog.Logger, service *service.TodoService, env, version string) http.Handler {
 	router := http.NewServeMux()
 
 	// middleware init
 	requestLogger := middleware.RequestLogger(logger)
 	recoverPanic := middleware.RecoverPanic(logger)
+
+	router.HandleFunc("GET /healthcheck", handlers.NewHealthCheckHandler(logger, env, version))
 
 	router.HandleFunc("GET /todos/{id}", handlers.NewGetTaskHandler(logger, service))
 	router.HandleFunc("GET /todos", handlers.NewGetAllTasksHandler(logger, service))

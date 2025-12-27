@@ -31,7 +31,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	logger.Info("creating config")
+	logger.Info("loading config")
 	cfg, err := config.New()
 	if err != nil {
 		logger.Error(err.Error())
@@ -57,7 +57,7 @@ func main() {
 	service := service.NewTodoService(logger, taskRepo)
 
 	logger.Info("creating routes and server")
-	router := routes.Routes(logger, service)
+	router := routes.Routes(logger, service, cfg.Env, cfg.Version)
 	s := server.New(logger, cfg, router)
 
 	logger.Info("initializing metrics")
@@ -73,7 +73,5 @@ func main() {
 
 // TODO: unit, integration tests
 // TODO: load test
-// TODO: metrics
-// TODO: helthcheck
 // TODO: repo context
-// TODO: endpoint todos/{id}/complete
+// TODO: test makefile sed command on linux machine
