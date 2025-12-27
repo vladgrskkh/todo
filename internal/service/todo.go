@@ -59,7 +59,11 @@ func (s *TodoService) CreateTask(task *domain.Task) error {
 		return ErrTaskExists
 	}
 
-	s.taskRepo.Insert(task)
+	err = s.taskRepo.Insert(task)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

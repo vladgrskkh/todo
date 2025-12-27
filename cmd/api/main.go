@@ -42,7 +42,13 @@ func main() {
 		logger.Error(err.Error())
 		os.Exit(1)
 	}
-	defer db.Close()
+
+	defer func() {
+		e := db.Close()
+		if e != nil {
+			logger.Error(e.Error())
+		}
+	}()
 
 	logger.Info("database opened")
 	logger.Info("creating task repository and todo service")
