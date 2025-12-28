@@ -28,7 +28,6 @@ func main() {
 	err := envload.Load(envPath, true)
 	if err != nil {
 		logger.Error(err.Error())
-		os.Exit(1)
 	}
 
 	logger.Info("loading config")

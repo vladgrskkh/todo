@@ -23,6 +23,10 @@ run/api:
 run/docker/api:
 	docker run -p 8080:8080 --env-file .env todo:latest
 
+## run/dockercompose/api: run the docker compose
+.PHONY: run/dockercompose/api
+run/dockercompose/api:
+	docker-compose up -d
 
 # =========================================================================================== #
 # QUALITY CONTROL
