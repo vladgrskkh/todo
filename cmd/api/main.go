@@ -70,8 +70,3 @@ func main() {
 		os.Exit(1)
 	}
 }
-
-// TODO: unit, integration tests
-// TODO: load test
-// TODO: repo context
-// TODO: test makefile sed command on linux machine

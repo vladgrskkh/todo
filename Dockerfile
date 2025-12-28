@@ -1,10 +1,10 @@
-FROM golang:1.25 AS builder
+FROM golang:1.25.4 AS builder
 
 WORKDIR /app
 
 ARG LINKER_FLAGS=""
 
-COPY go.mod go.sum ./
+COPY go.mod ./
 RUN go mod download
 
 COPY . .
