@@ -49,7 +49,7 @@ make run/api
 
 Через docker-compose(в таком случае бд будет persistent):
 ```bash
-make run/dockercompse/api
+make run/dockercompose/api
 ```
 
 Для сборки бинарника:
