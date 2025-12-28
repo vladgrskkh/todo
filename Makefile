@@ -28,6 +28,11 @@ run/docker/api:
 run/dockercompose/api:
 	docker-compose up -d
 
+## run/dockercompose/stop: stop the docker compose
+.PHONY: run/dockercompose/stop
+run/dockercompose/stop:
+	docker-compose down
+
 # =========================================================================================== #
 # QUALITY CONTROL
 # =========================================================================================== #
