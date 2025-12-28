@@ -91,7 +91,11 @@ func TestNewGetTaskHandler(t *testing.T) {
 		}
 
 		var response map[string]domain.Task
-		json.Unmarshal(w.Body.Bytes(), &response)
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		if err != nil {
+			t.Fatalf("Failed to unmarshal response: %v", err)
+		}
+
 		task := response["task"]
 		if task.ID != 1 || task.Title != "Test Task" {
 			t.Error("Task data incorrect")
@@ -137,7 +141,10 @@ func TestNewGetAllTasksHandler(t *testing.T) {
 			}
 
 			var response map[string][]domain.Task
-			json.Unmarshal(w.Body.Bytes(), &response)
+			err := json.Unmarshal(w.Body.Bytes(), &response)
+			if err != nil {
+				t.Fatalf("Failed to unmarshal response: %v", err)
+			}
 			if len(response["tasks"]) != len(tt.tasks) {
 				t.Errorf("Expected %d tasks, got %d", len(tt.tasks), len(response["tasks"]))
 			}
