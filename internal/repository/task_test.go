@@ -77,9 +77,12 @@ func TestTaskRepoGetAll(t *testing.T) {
 	})
 
 	t.Run("returns all tasks", func(t *testing.T) {
-		repo.Insert(domain.NewTask(1, "Task 1", "Desc 1"))
-		repo.Insert(domain.NewTask(2, "Task 2", "Desc 2"))
-		repo.Insert(domain.NewTask(3, "Task 3", "Desc 3"))
+		for i := 1; i <= 3; i++ {
+			err := repo.Insert(domain.NewTask(int64(i), "Test", "Test"))
+			if err != nil {
+				t.Fatalf("Failed to insert task: %v", err)
+			}
+		}
 
 		tasks, err := repo.GetAll()
 		if err != nil {
@@ -99,13 +102,16 @@ func TestTaskRepoUpdate(t *testing.T) {
 
 	t.Run("updates task successfully", func(t *testing.T) {
 		task := domain.NewTask(1, "Original", "Original Description")
-		repo.Insert(task)
+		err := repo.Insert(task)
+		if err != nil {
+			t.Fatalf("Failed to insert: %v", err)
+		}
 
 		task.Title = "Updated"
 		task.Description = "Updated Description"
 		task.Done = true
 
-		err := repo.Update(task)
+		err = repo.Update(task)
 		if err != nil {
 			t.Fatalf("Failed to update: %v", err)
 		}

@@ -20,8 +20,6 @@ import (
 )
 
 func init() {
-	// Initialize metrics before any tests run
-	// Check if already initialized to avoid panic
 	if metrics.TotalTasksCreated == nil {
 		metrics.InitMetrics()
 	}

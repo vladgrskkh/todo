@@ -53,7 +53,10 @@ func TestWriteJSON(t *testing.T) {
 			"Cache-Control":   []string{"no-cache"},
 		}
 
-		WriteJSON(w, http.StatusOK, data, headers)
+		err := WriteJSON(w, http.StatusOK, data, headers)
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
 
 		contentType := w.Header().Get("Content-Type")
 		if contentType != "application/json" {
@@ -72,7 +75,10 @@ func TestWriteJSON(t *testing.T) {
 		w := httptest.NewRecorder()
 		data := Envelope{"test": "data"}
 
-		WriteJSON(w, http.StatusOK, data, nil)
+		err := WriteJSON(w, http.StatusOK, data, nil)
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
 
 		body := w.Body.String()
 		if len(body) == 0 {
@@ -93,7 +99,10 @@ func TestWriteJSON(t *testing.T) {
 		}
 
 		var response map[string]interface{}
-		json.Unmarshal(w.Body.Bytes(), &response)
+		err = json.Unmarshal(w.Body.Bytes(), &response)
+		if err != nil {
+			t.Fatalf("Failed to unmarshal: %v", err)
+		}
 
 		if len(response) != 0 {
 			t.Errorf("Expected empty object, got %v", response)
@@ -119,7 +128,10 @@ func TestWriteJSON(t *testing.T) {
 		}
 
 		var response map[string]interface{}
-		json.Unmarshal(w.Body.Bytes(), &response)
+		err = json.Unmarshal(w.Body.Bytes(), &response)
+		if err != nil {
+			t.Fatalf("Failed to unmarshal: %v", err)
+		}
 
 		users, ok := response["users"].([]interface{})
 		if !ok {
