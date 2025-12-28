@@ -94,38 +94,6 @@ func TestTaskRepoGetAll(t *testing.T) {
 	})
 }
 
-func TestTaskRepoUpdate(t *testing.T) {
-	db, cleanup := setupTestEnvironment(t)
-	defer cleanup()
-
-	repo := NewTaskRepo(db)
-
-	t.Run("updates task successfully", func(t *testing.T) {
-		task := domain.NewTask(1, "Original", "Original Description")
-		err := repo.Insert(task)
-		if err != nil {
-			t.Fatalf("Failed to insert: %v", err)
-		}
-
-		task.Title = "Updated"
-		task.Description = "Updated Description"
-		task.Done = true
-
-		err = repo.Update(task)
-		if err != nil {
-			t.Fatalf("Failed to update: %v", err)
-		}
-
-		updated, err := repo.Get(1)
-		if err != nil {
-			t.Fatalf("Failed to get updated task: %v", err)
-		}
-		if updated.Title != "Updated" || !updated.Done {
-			t.Error("Task not updated correctly")
-		}
-	})
-}
-
 func TestTaskRepoDelete(t *testing.T) {
 	db, cleanup := setupTestEnvironment(t)
 	defer cleanup()

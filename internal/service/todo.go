@@ -83,7 +83,7 @@ func (s *TodoService) UpdateTask(id int64, input dto.UpdateTaskInput) (*domain.T
 		return nil, validator
 	}
 
-	err = s.taskRepo.Update(task)
+	err = s.taskRepo.Insert(task)
 	if err != nil {
 		return nil, fmt.Errorf("error updating task with %d id: %w", task.ID, err)
 	}

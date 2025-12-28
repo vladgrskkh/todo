@@ -6,7 +6,6 @@ import (
 	"github.com/vladgrskkh/todo/pkg/validator"
 )
 
-// TODO: check for struct alligment
 type Task struct {
 	ID          int64  `json:"id"`
 	Title       string `json:"title"`
