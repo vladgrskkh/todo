@@ -7,8 +7,10 @@ import (
 )
 
 type Config struct {
-	Port   int
-	DBPath string
+	Port    int
+	Env     string
+	Version string
+	DBPath  string
 }
 
 func New() (*Config, error) {
@@ -22,8 +24,17 @@ func New() (*Config, error) {
 		dbPath = "todo.db"
 	}
 
+	env := os.Getenv("API_TODO_ENV")
+	if env == "" {
+		env = "development"
+	}
+
+	version := os.Getenv("API_TODO_VERSION")
+
 	return &Config{
-		Port:   port,
-		DBPath: dbPath,
+		Port:    port,
+		Env:     env,
+		Version: version,
+		DBPath:  dbPath,
 	}, nil
 }

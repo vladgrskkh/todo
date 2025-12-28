@@ -12,7 +12,7 @@ type Task struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	Done        bool   `json:"done"`
-	Version     int    `json:"-"`
+	version     int    `json:"-"`
 }
 
 func NewTask(id int64, title string, description string) *Task {
@@ -21,7 +21,7 @@ func NewTask(id int64, title string, description string) *Task {
 		Title:       title,
 		Description: description,
 		Done:        false,
-		Version:     1,
+		version:     1,
 	}
 }
 
@@ -33,6 +33,8 @@ func (t *Task) Update(v *validator.Validator, title string, description string, 
 	t.Title = title
 	t.Description = description
 	t.Done = done
+
+	t.version++
 }
 
 func ValidateTask(v *validator.Validator, task *Task) {
