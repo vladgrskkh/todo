@@ -47,13 +47,18 @@ API_TODO_VERSION=v1.1.0-1-g5c1e3da-dirty
 make run/api
 ```
 
+Через docker-compose(в таком случае бд будет persistent):
+```bash
+make run/dockercompse/api
+```
+
 Для сборки бинарника:
 ```bash
 make build/api
 ./bin/api
 ```
 
-Через докер:
+Через docker(бд не будет persistent):
 ```bash
 make build/docker/api
 make run/docker/api
